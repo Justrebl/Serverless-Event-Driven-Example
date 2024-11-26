@@ -1,0 +1,26 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directories:
+    - "/console-cli"
+    - "/console-daemon"
+    - "/desktop-winforms"
+    - "/desktop-winui"
+    - "/desktop-wpf"
+    - "/spa-blazor-wasm"
+    - "/web-api-obo-client"
+    - "/web-api-obo-user"
+    - "/web-api"
+    - "/web-app-aspnet"
+    - "/web-app-blazor-server"
+    - "/xplat-maui"
+    schedule:
+      interval: "daily"
+    labels:
+      - "dependabot"
+      - "dependencies"
