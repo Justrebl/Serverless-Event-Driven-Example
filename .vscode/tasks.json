@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/MSAL_Example/Cli.csproj"
+                "${workspaceFolder}/src/MSAL_Example/Cli.csproj"
             ],
             "problemMatcher": "$msCompile"
         }

@@ -4,5 +4,10 @@
         "ClientId": "GUID App Client ID",
         "ClientSecret": "***",
         "ClientObjectId": "GUID App Object ID"
+    },
+    "NewUser":{
+        "EmailAddress": "",
+        "DisplayName": "",
+        "Password": ""
     }
 }

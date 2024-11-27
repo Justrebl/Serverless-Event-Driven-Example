@@ -22,3 +22,6 @@
 - Authentication library source code on GitHub
   - [Microsoft Authentication Library for .NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet)
   - [Microsoft.Identity.Web](https://github.com/AzureAD/microsoft-identity-web)
+- Example on MSGraph Client Credential Configuration : 
+  - [Manage User Account in Azure AD B2C with MS Graph](https://www.c-sharpcorner.com/article/manage-user-account-in-azure-ad-b2c-with-microsoft-graph/)
+  - [Create User Account in Entra External ID with MS Graph](https://www.c-sharpcorner.com/blogs/create-user-account-in-azure-ad-b2c-with-ms-graph#:~:text=The%20PostAsync%20function%20from%20the%20MS%20Graph%20client,graphClient.%20Users%20.PostAsync%28new%20User%20%7B%20GivenName%20%3D%20%22Test%22%2C)
