@@ -6,15 +6,30 @@
 	"image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5001],
-	// "portsAttributes": {
-	//		"5001": {
-	//			"protocol": "https"
-	//		}
-	// }
+	"features": {
+		//Az CLI install
+        "azure-cli": {
+            "version": "latest"
+        },
+        //Terraform + tflint install
+        "ghcr.io/devcontainers/features/terraform:latest": {
+            "version": "latest",
+            "tflint": "latest"
+        },
+        // Azure Function Core tools + Visual Studio Extension install
+        "ghcr.io/jlaundry/devcontainer-features/azure-functions-core-tools:1": {},
+		// Node JS : 
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts",
+			"nvmVersion": "latest"
+		}
+	},
+	"forwardPorts": [
+        7071,
+        10000,
+        10001,
+        10002
+    ],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "dotnet restore",
@@ -23,6 +38,13 @@
 	"customizations": {
         "vscode": {
             "extensions": [
+				// Azurite : Storage Account Emulator for local Azure Function Debug
+                "azurite.azurite",
+                "humao.rest-client",
+                // Terraform
+                "hashicorp.terraform",
+
+				// Language Specifics
                 "ms-dotnettools.csharp",
                 "ms-dotnettools.vscodeintellicode-csharp",
                 "ms-dotnettools.csdevkit",
@@ -34,5 +56,5 @@
     },
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	"remoteUser": "root"
 }
