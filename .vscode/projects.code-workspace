@@ -7,7 +7,7 @@
             "path": "../src/MSAL_Example"
         },
         {
-            "path": "../src/WebApp_Example"
+            "path": "../src/SPA_JS_Vanilla"
         }
     ],
     "settings": {}

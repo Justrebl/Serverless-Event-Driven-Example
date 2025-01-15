@@ -1,0 +1,23 @@
+{
+    "name": "ciam-sign-in-javascript",
+    "version": "1.0.0",
+    "description": "Vanilla JavaScript single-page application using MSAL.js to authenticate users against Microsoft Entra External ID",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "test": "jest --forceExit"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@azure/msal-browser": "^3.16.0",
+        "ciam-sign-in-javascript": "file:",
+        "express": "^4.19.2",
+        "morgan": "^1.10.0"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "jest-environment-jsdom": "^29.7.0",
+        "supertest": "^7.0.0"
+    }
+}

@@ -21,7 +21,8 @@
 		// Node JS : 
 		"ghcr.io/devcontainers/features/node:1": {
 			"version": "lts",
-			"nvmVersion": "latest"
+			"nvmVersion": "latest",
+            "installYarn": true
 		}
 	},
 	"forwardPorts": [
@@ -50,7 +51,9 @@
                 "ms-dotnettools.csdevkit",
                 "ms-azuretools.ms-entra",
                 "ms-vscode.vscode-node-azure-pack",
-                "ms-vscode.azure-account"
+                "ms-vscode.azure-account",
+                "devondcarew.bazel-code",
+                "ms-vscode.vscode-typescript-tslint-plugin"
             ]
         }
     },
