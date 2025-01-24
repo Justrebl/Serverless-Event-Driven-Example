@@ -18,12 +18,14 @@ string clientId = config.GetValue("MSAL:ClientId", String.Empty);
 string clientSecret = config.GetValue("MSAL:ClientSecret", String.Empty);
 string authorityBase = config.GetValue("MSAL:Authority", "https://login.microsoftonline.com/");
 Uri authority = new Uri(new Uri(authorityBase), tenantId); // Double new Uri to avoid adding a second trailing slash in case authority already has one.
+var issuer = config.GetValue<string>("MSAL:Issuer");
+string userScenario = config.GetValue("MSAL:UserScenario", "internal");
 
 var scopes = new[] { $"https://graph.microsoft.com/.default" };
 var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
 var graphClient = new GraphServiceClient(credential, scopes);
 
-// Scenario 1 : Get All the Users
+// Get All the Users
 try {
     var users = await graphClient.Users.GetAsync();
     var usersValue = users.Value;
@@ -33,37 +35,79 @@ catch (Exception ex) {
     Console.WriteLine(ex.Message);
 }
 
-//Scenario 2 : Create a new User
-var email = config.GetValue("NewUser:EmailAddress", "JohnDoe@outlook.fr");
-var displayName = config.GetValue("NewUser:DisplayName", "John Doe");
-// If password is not provided, generate a random password
+User newUser = null;
 string? password = string.IsNullOrEmpty(config.GetValue<string>("NewUser:Password")) 
-    ? PasswordGenerator.CreateRandomPassword(12) 
-    : config.GetValue<string>("NewUser:Password");
+            ? PasswordGenerator.CreateRandomPassword(12) 
+            : config.GetValue<string>("NewUser:Password");
 
-var newUser = new User {
-    AccountEnabled = true,
-    DisplayName = "Test User",
-    Mail = email,
-    Identities = new List<ObjectIdentity>
-    {
-        new ObjectIdentity
-        {
-            SignInType = "emailAddress",
-            Issuer = "justrebldemo.onmicrosoft.com",
-            IssuerAssignedId = email
+switch(userScenario)
+{
+    case "internal":
+        //Scenario 1 : Create a new External User
+        var email = config.GetValue<string>("NewExternalUser:EmailAddress");
+        var extDisplayName = config.GetValue<string>("NewExternalUser:DisplayName");
+        // If password is not provided, generate a random password
+
+        newUser = new User {
+            AccountEnabled = true,
+            DisplayName = extDisplayName,
+            Mail = email,
+            Identities = new List<ObjectIdentity>
+            {
+                new ObjectIdentity
+                {
+                    SignInType = "emailAddress",
+                    Issuer = issuer,
+                    IssuerAssignedId = email
+                }
+            },
+            PasswordProfile = new PasswordProfile
+            {
+                Password = password,
+                ForceChangePasswordNextSignIn = false // Need to be false for localUsers
+            },
+            PasswordPolicies = "DisablePasswordExpiration" //Need to be disabled for locaUsers
+        };
+        break;
+
+    case "external":
+        // Scenario 2 : Create a new Internal User
+        var internalUser = config.GetValue<string>("NewInternalUser:UserPrincipalName");
+        var intMailNickname = config.GetValue<string>("NewInternalUser:MailNickname");
+        var intDisplayName = config.GetValue<string>("NewInternalUser:DisplayName");
+        var intUserPrincipalName = config.GetValue<string>("NewInternalUser:UserPrincipalName");
+
+        //Check mandatory configs are provided
+        if (string.IsNullOrEmpty(internalUser) || string.IsNullOrEmpty(intMailNickname) || string.IsNullOrEmpty(intDisplayName) || string.IsNullOrEmpty(intUserPrincipalName)) {
+            Console.WriteLine("Please provide all the mandatory fields for internal user creation");
+            return;
         }
-    },
-    PasswordProfile = new PasswordProfile
-    {
-        Password = password,
-        ForceChangePasswordNextSignIn = false // Need to be false for localUsers
-    },
-    PasswordPolicies = "DisablePasswordExpiration" //Need to be disabled for locaUsers
-};
+
+        newUser = new User {
+            AccountEnabled = true,
+            DisplayName = intDisplayName,
+            MailNickname = intMailNickname,
+            UserPrincipalName=$"{internalUser}@{issuer}", // needs to be the same domain as the tenant as it will be a member of the tenant, not an external user in the tenant
+            PasswordProfile = new PasswordProfile
+            {
+                Password = password,
+                ForceChangePasswordNextSignIn = true
+            }
+        };
+        break;
+    default: 
+        Console.WriteLine("Invalid User Scenario");
+        break;
+}
+
 try {
-    var result = await graphClient.Users.PostAsync(newUser);
-    Console.WriteLine($"User Successfully created with ID: {result.Id}");
+    if (newUser != null) {
+        var result = await graphClient.Users.PostAsync(newUser);
+        Console.WriteLine($"User Successfully created with ID: {result.Id}");
+    }
+    else {
+        Console.WriteLine("No relevant information provided for the user, exiting...");
+    }
 }
 catch (Exception ex) {
     Console.WriteLine(ex.Message);
