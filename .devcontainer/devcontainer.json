@@ -20,7 +20,7 @@
         "ghcr.io/jlaundry/devcontainer-features/azure-functions-core-tools:1": {},
 		// Node JS : 
 		"ghcr.io/devcontainers/features/node:1": {
-			"version": "lts",
+			"version": "20",
 			"nvmVersion": "latest",
             "installYarn": true
 		}
