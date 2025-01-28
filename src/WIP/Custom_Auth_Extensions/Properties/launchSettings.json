@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Custom_Auth_Extensions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7202",
+      "launchBrowser": false
+    }
+  }
+}
