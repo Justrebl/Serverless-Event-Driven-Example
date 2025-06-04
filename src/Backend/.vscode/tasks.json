@@ -7,7 +7,9 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/MSAL_Example/Cli.csproj"
+                "${workspaceFolder}/Backend.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         }
