@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../MSAL_Example"
+		}
+	],
+	"settings": {}
+}
