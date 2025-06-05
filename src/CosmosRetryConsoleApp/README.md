@@ -1,0 +1,26 @@
+## Grant access to Cosmos DB with an identity
+
+> **Note:**
+> There is currently no role assignment option available in the Azure portal for Cosmos DB RBAC. You must use Azure CLI, PowerShell, or an ARM template.
+
+### Azure CLI commands
+
+# Create a service principal (SPN) if you want to use an app registration
+https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app
+
+# Grant the access
+```
+resourceGroupName='<myResourceGroup>'
+accountName='<myCosmosAccount>'
+readOnlyRoleDefinitionId='00000000-0000-0000-0000-000000000002' # Cosmos DB Built-in Data Contributor role definition ID
+principalId='<your-object-id>' # Object ID of the managed identity
+
+az cosmosdb sql role assignment create \
+  --account-name $accountName \
+  --resource-group $resourceGroupName \
+  --scope "/" \
+  --principal-id $principalId \
+  --role-definition-id $readOnlyRoleDefinitionId
+```
+
+For more details, see the official documentation: [Grant access - Managed Identity & Cosmos DB](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/tutorial-vm-managed-identities-cosmos?tabs=azure-cli#grant-access)
