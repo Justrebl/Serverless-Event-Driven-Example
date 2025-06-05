@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.5.002.0
+VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cli", "src\MSAL_Example\Cli.csproj", "{02150C0C-C207-4DF3-8733-E239A6F6C72B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CDB3E1FC-0C12-4EB3-8CB0-F321E4BD05EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CosmosRetryConsoleApp", "src\CosmosRetryConsoleApp\CosmosRetryConsoleApp.csproj", "{C62B7F0A-6797-457F-BB87-6CEEB8AE8CA2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +19,16 @@ Global
 		{02150C0C-C207-4DF3-8733-E239A6F6C72B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02150C0C-C207-4DF3-8733-E239A6F6C72B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02150C0C-C207-4DF3-8733-E239A6F6C72B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C62B7F0A-6797-457F-BB87-6CEEB8AE8CA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C62B7F0A-6797-457F-BB87-6CEEB8AE8CA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C62B7F0A-6797-457F-BB87-6CEEB8AE8CA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C62B7F0A-6797-457F-BB87-6CEEB8AE8CA2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C62B7F0A-6797-457F-BB87-6CEEB8AE8CA2} = {CDB3E1FC-0C12-4EB3-8CB0-F321E4BD05EF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E447D051-17A5-4726-BC3C-98FC39077032}
