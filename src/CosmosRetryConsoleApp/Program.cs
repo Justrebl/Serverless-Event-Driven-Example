@@ -1,45 +1,44 @@
 ﻿using Azure.Identity;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Threading.Tasks;
 
+using Container = Microsoft.Azure.Cosmos.Container;
+
 class Program
 {
     static async Task Main(string[] args)
     {
 
+
         var config = new ConfigurationBuilder()
-        .SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-        .AddEnvironmentVariables()
-        .Build();
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .Build();
 
-        string endpointUri = config.GetValue("CosmosDB:EndpointUri", String.Empty);
-        string databaseId = config.GetValue("CosmosDB:DatabaseId", String.Empty);
-        string containerId = config.GetValue("CosmosDB:ContainerId", String.Empty);
-        string primaryKey = config.GetValue("CosmosDB:PrimaryKey", String.Empty);
-        string tenantId = config.GetValue("Identity:TenantId", String.Empty);
-        string clientId = config.GetValue("Identity:ClientId", String.Empty);
-        string clientKey = config.GetValue("Identity:ClientKey", String.Empty);
-        var verTokenCredential = new ClientSecretCredential(tenantId, clientId, clientKey);
+        var cosmosConfig = config.GetSection("CosmosDB").Get<CosmosRetryConsoleApp.Config.CosmosDBConfig>()!;
+        var identityConfig = config.GetSection("Identity").Get<CosmosRetryConsoleApp.Config.IdentityConfig>()!;
 
-
-        CosmosClientOptions options = new CosmosClientOptions
-        {
-            // ConnectionMode = ConnectionMode.Gateway, // ou Direct
-            // MaxRetryAttemptsOnRateLimitedRequests = 5,
-            // MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromSeconds(10)
-        };
-
-        CosmosClient client = new CosmosClient(endpointUri, verTokenCredential, options);
+        CosmosClient client = new CosmosClient(
+            accountEndpoint: cosmosConfig.EndpointUri,
+            tokenCredential: new ClientSecretCredential(identityConfig.TenantId, identityConfig.ClientId, identityConfig.ClientKey),
+            clientOptions: new CosmosClientOptions
+            {
+                ConnectionMode = ConnectionMode.Gateway, // or Direct
+                MaxRetryAttemptsOnRateLimitedRequests = 10, // Number of retries on 429 Too Many Requests (default 9)
+                MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromSeconds(30), // Maximum wait time for cumulative retries (default 30 seconds)
+                ConsistencyLevel = ConsistencyLevel.Session // or Eventual, Strong, BoundedStaleness, etc.
+            });
 
         try
         {
-            Microsoft.Azure.Cosmos.Database database = await client.CreateDatabaseIfNotExistsAsync(databaseId);
-            Microsoft.Azure.Cosmos.Container container = await database.CreateContainerIfNotExistsAsync(containerId, "/id");
+            Database database = await client.CreateDatabaseIfNotExistsAsync(cosmosConfig.DatabaseId);
+            Container container = await database.CreateContainerIfNotExistsAsync(cosmosConfig.ContainerId, "/id");
 
             var testItem = new { id = Guid.NewGuid().ToString(), name = "RetryTest", timestamp = DateTime.UtcNow };
             var response = await container.CreateItemAsync(testItem, new PartitionKey(testItem.id));
@@ -57,53 +56,51 @@ class Program
             int retryCount = 0;
             int totalRequests = 1000;
             int chunkSize = 100; // Adjust chunk size as needed
-            // Task[] tasks = new Task[totalRequests];
             List<Func<Task>> tasks = new List<Func<Task>>();
             double parallelRU = 0;
+            object countLock = new object();
 
-            for (int i = 0; i < totalRequests; i++)
-            {
-                tasks.Add(async () =>
-                {
-                    await RunCosmosOperationsAsync(container, ref parallelRU, retryCount);
-                });
-                var throttler = new SemaphoreSlim(chunkSize);
-                var tasksToRun = tasks.Select(async task =>
-                {
-                    await throttler.WaitAsync();
-                    try
-                    {
-                        await task();
-                    }
-                    finally
-                    {
-                        throttler.Release();
-                    }
-                });
-                await Task.WhenAll(tasksToRun);
-                // tasks[i] = Task.Run(async () =>
-                // {
-                //     try
-                //     {
-                //         var item = new { id = Guid.NewGuid().ToString(), name = "RetryTest", timestamp = DateTime.UtcNow };
-                //         var resp = await container.CreateItemAsync(item, new PartitionKey(item.id));
-                //         lock (ruLock) { parallelRU += resp.RequestCharge; }
-                //     }
-                //     catch (CosmosException ex)
-                //     {
-                //         if (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-                //         {
-                //             retryCount++;
-                //             Console.WriteLine($"429 received. RetryAfter: {ex.RetryAfter}");
-                //         }
-                //         else
-                //         {
-                //             Console.WriteLine($"CosmosException: {ex.StatusCode} - {ex.Message}");
-                //         }
-                //     }
-                // });
-            }
-            // await Task.WhenAll(tasks);
+
+
+            var throttler = new SemaphoreSlim(chunkSize);
+            var tasksToRun = Enumerable.Range(0, totalRequests)
+               .Select(async i =>
+               {
+                   await throttler.WaitAsync();
+                   ItemResponse<Item> itemResponse = null;
+
+                   try
+                   {
+                       do
+                       {
+                           try
+                           {
+                               itemResponse = await RunCosmosOperationsAsync(container);
+                               lock (countLock) { parallelRU += itemResponse.RequestCharge; }
+                           }
+                           catch (CosmosException ex)
+                           {
+                               if (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                               {
+                                   lock (countLock) { retryCount++; }
+                                   Console.WriteLine($"429 received. RetryAfter: {ex.RetryAfter}");
+                               }
+                               else
+                               {
+                                   Console.WriteLine($"CosmosException: {ex.StatusCode} - {ex.Message}");
+                               }
+                           }
+                       } while (itemResponse == null);
+                   }
+                   finally
+                   {
+                       throttler.Release();
+
+                   }
+               }).ToList();
+
+            await Task.WhenAll(tasksToRun);
+
             Console.WriteLine($"Total retries due to 429: {retryCount}");
             Console.WriteLine($"Total RU consumed (single + update): {totalRU}");
             Console.WriteLine($"Total RU consumed (parallel inserts): {parallelRU}");
@@ -118,27 +115,10 @@ class Program
         }
     }
 
-    private async Task RunCosmosOperationsAsync(Microsoft.Azure.Cosmos.Container container, ref double parallelRU, int retryCount)
+    private static async Task<ItemResponse<Item>> RunCosmosOperationsAsync(Container container)
     {
-        object ruLock = new object();
-        try
-        {
-            var item = new { id = Guid.NewGuid().ToString(), name = "RetryTest", timestamp = DateTime.UtcNow };
-            var resp = await container.CreateItemAsync(item, new PartitionKey(item.id));
-            lock (ruLock) { parallelRU += resp.RequestCharge; }
-        }
-        catch (CosmosException ex)
-        {
-            if (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-            {
-                retryCount++;
-                Console.WriteLine($"429 received. RetryAfter: {ex.RetryAfter}");
-            }
-            else
-            {
-                Console.WriteLine($"CosmosException: {ex.StatusCode} - {ex.Message}");
-            }
-        }
-
+        var item = new Item() { Id = Guid.NewGuid().ToString(), Name = "RetryTest", Timestamp = DateTime.UtcNow };
+        var resp = await container.CreateItemAsync(item, new PartitionKey(item.Id));
+        return resp;
     }
 }
