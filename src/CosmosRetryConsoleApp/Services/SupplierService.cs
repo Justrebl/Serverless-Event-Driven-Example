@@ -43,7 +43,13 @@ namespace CosmosRetryConsoleApp.Services
                 ru += response.RequestCharge;
                 foreach (var supplier in response)
                 {
-                    try { updatedCount++; } catch { }
+                    try
+                    {
+                        var upResp = await _containerService.ReplaceItemAsync<T>(supplier, supplier.id);
+                        ru += upResp.RequestCharge;
+                        updatedCount++;
+                    }                    
+                    catch { }
                 }
             }
             sw.Stop();

@@ -12,6 +12,8 @@ class Program
     {
         // Initialize configurations and Cosmos DB client using AppInitializer
         var (cosmosConfig, identityConfig) = await AppInitializer.InitConfigsAsync();
+
+        // Check for the retry count and wait time configurations in InitDatabaseClientAsync if update is needed.
         var dbClient = await AppInitializer.InitDatabaseClientAsync(cosmosConfig, identityConfig);
 
         // Scenario : Throttling simulation

@@ -1,4 +1,5 @@
 using CosmosRetryConsoleApp.Config;
+using CosmosRetryConsoleApp.Models;
 using CosmosRetryConsoleApp.Services;
 using Microsoft.Azure.Cosmos;
 using System;
@@ -12,11 +13,11 @@ namespace CosmosRetryConsoleApp.Sequences
         public static async Task RunAsync(Database database)
         {
             // Mesure des temps pour chaque opération
-            long tFindQpA = -1, tQpsBySupplierA = -1, tCreateQpA = -1, tUpdateQpA = -1, tUpdateAllSuppliersA = -1;
-            long tFindQpB = -1, tQpsBySupplierB = -1, tQpReadsB = -1, tCreateQpB = -1, tUpdateQpB = -1, tUpdateAllSuppliersB = -1;
-            double ruFindQpA = -1, ruQpsBySupplierA = -1, ruCreateQpA = -1, ruUpdateQpA = -1, ruUpdateAllSuppliersA = -1;
-            double ruFindQpB = -1, ruQpsBySupplierB = -1, ruQpReadsB = -1, ruCreateQpB = -1, ruUpdateQpB = -1, ruUpdateAllSuppliersB = -1;
-            double ruCreateQpB_updateSupplier = -1;
+            // long tFindQpA = -1, tQpsBySupplierA = -1, tCreateQpA = -1, tUpdateQpA = -1, tUpdateAllSuppliersA = -1;
+            // long tFindQpB = -1, tQpsBySupplierB = -1, tQpReadsB = -1, tCreateQpB = -1, tUpdateQpB = -1, tUpdateAllSuppliersB = -1;
+            // double ruFindQpA = -1, ruQpsBySupplierA = -1, ruCreateQpA = -1, ruUpdateQpA = -1, ruUpdateAllSuppliersA = -1;
+            // double ruFindQpB = -1, ruQpsBySupplierB = -1, ruQpReadsB = -1, ruCreateQpB = -1, ruUpdateQpB = -1, ruUpdateAllSuppliersB = -1;
+            // double ruCreateQpB_updateSupplier = -1;
 
             try
             {
@@ -47,19 +48,19 @@ namespace CosmosRetryConsoleApp.Sequences
                 var upsertQpAResp = await qpAService.UpsertQpAsync(qpA);
 
                 // 1. Find QP by ID (Model A)
-                (ruFindQpA, tFindQpA) = await qpAService.FindQpByIdAsync<Models.QPA>(qpA.id);
+                var (ruFindQpA, tFindQpA) = await qpAService.FindQpByIdAsync<Models.QPA>(qpA.id);
 
                 // 2. Find all QPs for supplier (Model A)
-                (ruQpsBySupplierA, tQpsBySupplierA, List<string> qpIdsA) = await supplierAService.FindQpsBySupplierAsync<Models.QPA>(supplierA.id, nameof(Models.QPA.idSupplier));
+                var (ruQpsBySupplierA, tQpsBySupplierA, qpIdsA) = await supplierAService.FindQpsBySupplierAsync<Models.QPA>(supplierA.id, nameof(Models.QPA.idSupplier));
 
                 // 3. Create QP (Model A)
-                (ruCreateQpA, tCreateQpA, var newQpAId) = await qpAService.CreateQpAsync<Models.QPA>(supplierA.id, nameof(Models.QPA.idSupplier));
+                var (ruCreateQpA, tCreateQpA, newQpAId) = await qpAService.CreateQpAsync<Models.QPA>(supplierA.id, nameof(Models.QPA.idSupplier));
 
                 // 4. Update QP (Model A)
-                (ruUpdateQpA, tUpdateQpA) = await qpAService.UpdateQpAsync<Models.QPA>(newQpAId, supplierA.id, nameof(Models.QPA.idSupplier));
+                var (ruUpdateQpA, tUpdateQpA) = await qpAService.UpdateQpAsync<Models.QPA>(newQpAId, supplierA.id, nameof(Models.QPA.idSupplier));
 
                 // 5. Update all suppliers (Model A)
-                (ruUpdateAllSuppliersA, tUpdateAllSuppliersA, int updatedCountA) = await supplierAService.UpdateAllSuppliersAsync<Models.SupplierA>();
+                var (ruUpdateAllSuppliersA, tUpdateAllSuppliersA, updatedCountA) = await supplierAService.UpdateAllSuppliersAsync<Models.SupplierA>();
 
                 // --- MODÈLE B (liste d'IDs QP dans Supplier) ---
                 Console.WriteLine("\n--- DÉBUT MODÈLE B (liste d'IDs QP dans Supplier, containers QP_B/Suppliers_B) ---");
@@ -93,19 +94,19 @@ namespace CosmosRetryConsoleApp.Sequences
                 await supplierBService.UpsertSupplierAsync(supplierB);
 
                 // 1. Find QP by ID (Model B)
-                (ruFindQpB, tFindQpB) = await qpBService.FindQpByIdAsync<QPB>(qpB.id);
+                var (ruFindQpB, tFindQpB) = await qpBService.FindQpByIdAsync<QPB>(qpB.id);
 
                 // 2. Find all QPs for supplier (Model B)
-                (ruQpsBySupplierB, tQpsBySupplierB, qpIdsB) = await supplierBService.FindQpsBySupplierListAsync(supplierB.id);
+                var (ruQpsBySupplierB, tQpsBySupplierB, qpIdsB) = await supplierBService.FindQpsBySupplierListAsync(supplierB.id);
 
                 // 3. Create QP and add to supplier (Model B)
-                (ruCreateQpB, tCreateQpB, var newQpBId) = await qpBService.CreateQpAndAddToSupplierAsync<Models.SupplierB>(supplierBService, supplierB.id);
+                var (ruCreateQpB, tCreateQpB, newQpBId) = await qpBService.CreateQpAndAddToSupplierAsync<Models.SupplierB>(supplierBService, supplierB.id);
 
                 // 4. Update QP (Model B)
-                (ruUpdateQpB, tUpdateQpB) = await qpBService.UpdateQpBAsync(newQpBId);
+                var (ruUpdateQpB, tUpdateQpB) = await qpBService.UpdateQpBAsync(newQpBId);
 
                 // 5. Update all suppliers (Model B)
-                (ruUpdateAllSuppliersB, tUpdateAllSuppliersB, updatedCountB) = await supplierBService.UpdateAllSuppliersAsync<Models.SupplierB>();
+                var (ruUpdateAllSuppliersB, tUpdateAllSuppliersB, updatedCountB) = await supplierBService.UpdateAllSuppliersAsync<Models.SupplierB>();
 
                 // --- COMPARATIF FINAL ---
                 Console.WriteLine("\n--- COMPARATIF FINAL (RU consommées & temps ms) ---");
