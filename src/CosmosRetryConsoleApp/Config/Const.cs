@@ -17,7 +17,7 @@ namespace CosmosRetryConsoleApp.Config
         public const string QPIdField = "qpId";
         public const string QPTypeField = "qpType";
 
-        public const int DefaultMaxRetries = 5;
-        public const int DefaultMaxWaitTimeSeconds = 30;
+        public const int DefaultMaxRetries = 10; // Maximum number of retries for throttled requests
+        public const int DefaultMaxWaitTimeSeconds = 30; // Maximum wait time for retries 
     }
 }

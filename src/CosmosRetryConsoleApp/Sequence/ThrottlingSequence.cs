@@ -1,4 +1,5 @@
 using Microsoft.Azure.Cosmos;
+using CosmosRetryConsoleApp.Config; 
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,8 +11,6 @@ namespace CosmosRetryConsoleApp.Sequences
     {
         public const int TOTAL_PARALLEL_REQUESTS = 1000;
         public const int CHUNK_SIZE = 100; // Adjust chunk size as needed
-        public const int MAX_RETRIES = 10; // Maximum number of retries for throttled requests
-        public const int MAX_WAIT_TIME_SECONDS = 30; // Maximum wait time for retries
 
         public static async Task<(double ruSingleCreateCount, double ruSingleUpdateCount, int failedRetryCount, double parallelRUCount)> RunAsync(Database database, string containerName)
         {
@@ -29,10 +28,10 @@ namespace CosmosRetryConsoleApp.Sequences
             var (ruSingleCreateCount, ruSingleUpdateCount) = await CountSingleUpsertOperationRUAsync(container, item);
 
             // Execute parallel inserts with retry logic and logging failed throttled request due to too many retries
-            var (failedRetryCount, parallelRUCount) = await SimulateThrottlingAsync(container, item, CHUNK_SIZE, TOTAL_PARALLEL_REQUESTS, MAX_RETRIES);
+            var (failedRetryCount, parallelRUCount) = await SimulateThrottlingAsync(container, item, CHUNK_SIZE, TOTAL_PARALLEL_REQUESTS, Const.DefaultMaxRetries);
 
             // Output the simulation results
-            Console.WriteLine($"Total requests failed even after retries due to {MAX_RETRIES} 429: {failedRetryCount}");
+            Console.WriteLine($"Total requests failed even after retries due to {Const.DefaultMaxRetries} 429: {failedRetryCount}");
             Console.WriteLine($"Total RU consumed (create): {ruSingleCreateCount}");
             Console.WriteLine($"Total RU consumed (update): {ruSingleUpdateCount}");
             Console.WriteLine($"Total RU consumed ({TOTAL_PARALLEL_REQUESTS} parallel inserts): {parallelRUCount}");
