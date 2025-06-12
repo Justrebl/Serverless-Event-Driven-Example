@@ -110,14 +110,16 @@ namespace CosmosRetryConsoleApp.Sequences
 
                 // --- COMPARATIF FINAL ---
                 Console.WriteLine("\n--- COMPARATIF FINAL (RU consommées & temps ms) ---");
+
                 string FormatRU(double ru) => ru < 0 ? "N/A" : ru.ToString();
                 string FormatT(long t) => t < 0 ? "N/A" : t.ToString();
+
                 Console.WriteLine("1. Trouver une QP par ID :");
                 Console.WriteLine($"  Modèle B : {FormatRU(ruFindQpB)} RU / {FormatT(tFindQpB)} ms | Modèle A : {FormatRU(ruFindQpA)} RU / {FormatT(tFindQpA)} ms");
                 Console.WriteLine("2. Trouver toutes les QP d’un supplier :");
-                Console.WriteLine($"  Modèle B : {FormatRU(ruQpsBySupplierB + ruQpReadsB)} RU / {FormatT(tQpsBySupplierB + tQpReadsB)} ms | Modèle A : {FormatRU(ruQpsBySupplierA)} RU / {FormatT(tQpsBySupplierA)} ms");
+                Console.WriteLine($"  Modèle B : {FormatRU(ruQpsBySupplierB)} RU / {FormatT(tQpsBySupplierB)} ms | Modèle A : {FormatRU(ruQpsBySupplierA)} RU / {FormatT(tQpsBySupplierA)} ms");
                 Console.WriteLine("3. Créer une QP :");
-                Console.WriteLine($"  Modèle B : {FormatRU(ruCreateQpB + ruCreateQpB_updateSupplier)} RU / {FormatT(tCreateQpB)} ms | Modèle A : {FormatRU(ruCreateQpA)} RU / {FormatT(tCreateQpA)} ms");
+                Console.WriteLine($"  Modèle B : {FormatRU(ruCreateQpB)} RU / {FormatT(tCreateQpB)} ms | Modèle A : {FormatRU(ruCreateQpA)} RU / {FormatT(tCreateQpA)} ms");
                 Console.WriteLine("4. Mettre à jour une QP :");
                 Console.WriteLine($"  Modèle B : {FormatRU(ruUpdateQpB)} RU / {FormatT(tUpdateQpB)} ms | Modèle A : {FormatRU(ruUpdateQpA)} RU / {FormatT(tUpdateQpA)} ms");
                 Console.WriteLine("5. Mettre à jour tous les suppliers :");
