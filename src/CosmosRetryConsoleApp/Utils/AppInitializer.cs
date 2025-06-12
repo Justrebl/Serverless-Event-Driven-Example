@@ -24,7 +24,7 @@ namespace CosmosRetryConsoleApp.Utils
             return (cosmosConfig, identityConfig);
         }
 
-        public static async Task<Database> InitDatabaseClientAsync(CosmosDBConfig cosmosConfig, IdentityConfig identityConfig, int maxRetries, int maxWaitTimeSeconds)
+        public static async Task<Database> InitDatabaseClientAsync(CosmosDBConfig cosmosConfig, IdentityConfig identityConfig)
         {
             var client = new CosmosClient(
                 accountEndpoint: cosmosConfig.EndpointUri,
@@ -32,8 +32,8 @@ namespace CosmosRetryConsoleApp.Utils
                 clientOptions: new CosmosClientOptions
                 {
                     ConnectionMode = ConnectionMode.Gateway, // or Direct
-                    MaxRetryAttemptsOnRateLimitedRequests = maxRetries,
-                    MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromSeconds(maxWaitTimeSeconds),
+                    MaxRetryAttemptsOnRateLimitedRequests = Const.DefaultMaxRetries,
+                    MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromSeconds(Const.DefaultMaxWaitTimeSeconds),
                     // ConsistencyLevel = ConsistencyLevel.Session // or Eventual, Strong, BoundedStaleness, etc.
                 });
 

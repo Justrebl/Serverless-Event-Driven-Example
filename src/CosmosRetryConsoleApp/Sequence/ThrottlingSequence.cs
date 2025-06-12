@@ -43,7 +43,7 @@ namespace CosmosRetryConsoleApp.Sequences
         {
             double ruSingleCreateCount = 0;
             double ruSingleUpdateCount = 0;
-            ItemResponse<Item> response = null;
+            ItemResponse<Item> response;
             try
             {
                 item.Id = Guid.NewGuid().ToString(); // Ensure unique ID for each item 
@@ -67,7 +67,7 @@ namespace CosmosRetryConsoleApp.Sequences
             object countLock = new object(); // Lock for thread-safe access to counters
             int failedRetryCount = 0;
             double parallelRUCount = 0;
-            var tasksToRun = System.Linq.Enumerable.Range(0, totalParallelRequests)
+            var tasksToRun = Enumerable.Range(0, totalParallelRequests)
                .Select(async i =>
                {
                    await throttler.WaitAsync();

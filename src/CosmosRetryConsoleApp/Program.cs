@@ -11,7 +11,7 @@ class Program
     static async Task Main(string[] args)
     {
         // Initialize configurations and Cosmos DB client using AppInitializer
-        var (cosmosConfig, identityConfig) = AppInitializer.InitConfigsAsync();
+        var (cosmosConfig, identityConfig) = await AppInitializer.InitConfigsAsync();
         var dbClient = await AppInitializer.InitDatabaseClientAsync(cosmosConfig, identityConfig);
 
         // Scenario : Throttling simulation

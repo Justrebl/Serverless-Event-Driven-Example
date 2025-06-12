@@ -1,3 +1,4 @@
+using CosmosRetryConsoleApp.Config;
 using CosmosRetryConsoleApp.Services;
 using Microsoft.Azure.Cosmos;
 using System;
@@ -21,24 +22,21 @@ namespace CosmosRetryConsoleApp.Sequences
             {
                 Console.WriteLine("\n--- DÉBUT MODÈLE A (clé étrangère dans QP, containers QP_A/Suppliers_A) ---");
 
-                string qpContainerIdA = "QP_A";
-                string suppliersContainerIdA = "Suppliers_A";
-
-                Container qpContainerA = (await database.CreateContainerIfNotExistsAsync(new ContainerProperties(qpContainerIdA, "/id"))).Container;
-                Container suppliersContainerA = (await database.CreateContainerIfNotExistsAsync(new ContainerProperties(suppliersContainerIdA, "/id"))).Container;
+                Container qpContainerA = (await database.CreateContainerIfNotExistsAsync(new ContainerProperties(Const.QPContainerIdA, "/id"))).Container;
+                Container suppliersContainerA = (await database.CreateContainerIfNotExistsAsync(new ContainerProperties(Const.suppliersContainerIdA, "/id"))).Container;
 
                 var qpAContainerService = new ContainerService(qpContainerA);
                 var qpAService = new QPService(qpAContainerService);
                 var suppliersAService = new ContainerService(suppliersContainerA);
                 var supplierAService = new SupplierService(suppliersAService);
 
-                var supplierA = new CosmosRetryConsoleApp.Models.SupplierA
+                var supplierA = new Models.SupplierA
                 {
                     id = "test-supplier-a-id-1",
                     property1 = "sup1",
                     property2 = "sup2"
                 };
-                var qpA = new CosmosRetryConsoleApp.Models.QPA
+                var qpA = new Models.QPA
                 {
                     id = "test-qp-a-id-1",
                     property1 = "init1",
@@ -49,19 +47,19 @@ namespace CosmosRetryConsoleApp.Sequences
                 var upsertQpAResp = await qpAService.UpsertQpAsync(qpA);
 
                 // 1. Find QP by ID (Model A)
-                (ruFindQpA, tFindQpA) = await qpAService.FindQpByIdAsync<CosmosRetryConsoleApp.Models.QPA>(qpA.id);
+                (ruFindQpA, tFindQpA) = await qpAService.FindQpByIdAsync<Models.QPA>(qpA.id);
 
                 // 2. Find all QPs for supplier (Model A)
-                (ruQpsBySupplierA, tQpsBySupplierA, List<string> qpIdsA) = await supplierAService.FindQpsBySupplierAsync<CosmosRetryConsoleApp.Models.QPA>(supplierA.id, nameof(CosmosRetryConsoleApp.Models.QPA.idSupplier));
+                (ruQpsBySupplierA, tQpsBySupplierA, List<string> qpIdsA) = await supplierAService.FindQpsBySupplierAsync<Models.QPA>(supplierA.id, nameof(Models.QPA.idSupplier));
 
                 // 3. Create QP (Model A)
-                (ruCreateQpA, tCreateQpA, var newQpAId) = await qpAService.CreateQpAsync<CosmosRetryConsoleApp.Models.QPA>(supplierA.id, nameof(CosmosRetryConsoleApp.Models.QPA.idSupplier));
+                (ruCreateQpA, tCreateQpA, var newQpAId) = await qpAService.CreateQpAsync<Models.QPA>(supplierA.id, nameof(Models.QPA.idSupplier));
 
                 // 4. Update QP (Model A)
-                (ruUpdateQpA, tUpdateQpA) = await qpAService.UpdateQpAsync<CosmosRetryConsoleApp.Models.QPA>(newQpAId, supplierA.id, nameof(CosmosRetryConsoleApp.Models.QPA.idSupplier));
+                (ruUpdateQpA, tUpdateQpA) = await qpAService.UpdateQpAsync<Models.QPA>(newQpAId, supplierA.id, nameof(Models.QPA.idSupplier));
 
                 // 5. Update all suppliers (Model A)
-                (ruUpdateAllSuppliersA, tUpdateAllSuppliersA, int updatedCountA) = await supplierAService.UpdateAllSuppliersAsync<CosmosRetryConsoleApp.Models.SupplierA>();
+                (ruUpdateAllSuppliersA, tUpdateAllSuppliersA, int updatedCountA) = await supplierAService.UpdateAllSuppliersAsync<Models.SupplierA>();
 
                 // --- MODÈLE B (liste d'IDs QP dans Supplier) ---
                 Console.WriteLine("\n--- DÉBUT MODÈLE B (liste d'IDs QP dans Supplier, containers QP_B/Suppliers_B) ---");
@@ -88,7 +86,7 @@ namespace CosmosRetryConsoleApp.Sequences
                 var supplierB = new SupplierB
                 {
                     id = "test-supplier-b-id-1",
-                    QPs = new System.Collections.Generic.List<string> { qpB.id },
+                    QPs = new List<string> { qpB.id },
                     property1 = "sup1",
                     property2 = "sup2"
                 };
@@ -101,13 +99,13 @@ namespace CosmosRetryConsoleApp.Sequences
                 (ruQpsBySupplierB, tQpsBySupplierB, qpIdsB) = await supplierBService.FindQpsBySupplierListAsync(supplierB.id);
 
                 // 3. Create QP and add to supplier (Model B)
-                (ruCreateQpB, tCreateQpB, var newQpBId) = await qpBService.CreateQpAndAddToSupplierAsync<CosmosRetryConsoleApp.Models.SupplierB>(supplierBService, supplierB.id);
+                (ruCreateQpB, tCreateQpB, var newQpBId) = await qpBService.CreateQpAndAddToSupplierAsync<Models.SupplierB>(supplierBService, supplierB.id);
 
                 // 4. Update QP (Model B)
                 (ruUpdateQpB, tUpdateQpB) = await qpBService.UpdateQpBAsync(newQpBId);
 
                 // 5. Update all suppliers (Model B)
-                (ruUpdateAllSuppliersB, tUpdateAllSuppliersB, updatedCountB) = await supplierBService.UpdateAllSuppliersAsync<CosmosRetryConsoleApp.Models.SupplierB>();
+                (ruUpdateAllSuppliersB, tUpdateAllSuppliersB, updatedCountB) = await supplierBService.UpdateAllSuppliersAsync<Models.SupplierB>();
 
                 // --- COMPARATIF FINAL ---
                 Console.WriteLine("\n--- COMPARATIF FINAL (RU consommées & temps ms) ---");

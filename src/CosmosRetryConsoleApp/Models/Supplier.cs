@@ -14,6 +14,6 @@ namespace CosmosRetryConsoleApp.Models
 
     public class SupplierB : Supplier
     {
-        public System.Collections.Generic.List<string> QPs { get; set; }
+        public List<string> QPs { get; set; }
     }
 }

@@ -35,24 +35,9 @@ namespace CosmosRetryConsoleApp.Services
             return await _container.ReadItemAsync<T>(id, new PartitionKey(id));
         }
 
-        public async Task<List<T>> QueryItemsAsync<T>(string query, Dictionary<string, object> parameters = null) where T : class
+        public async Task<FeedIterator<T>> QueryItemsAsync<T>(QueryDefinition query) where T : class
         {
-            var items = new List<T>();
-            QueryDefinition queryDef = new QueryDefinition(query);
-            if (parameters != null)
-            {
-                foreach (var param in parameters)
-                {
-                    queryDef = queryDef.WithParameter(param.Key, param.Value);
-                }
-            }
-            FeedIterator<T> iterator = _container.GetItemQueryIterator<T>(queryDef);
-            while (iterator.HasMoreResults)
-            {
-                FeedResponse<T> response = await iterator.ReadNextAsync();
-                items.AddRange(response);
-            }
-            return items;
+            return _container.GetItemQueryIterator<T>(query);
         }
     }
 }

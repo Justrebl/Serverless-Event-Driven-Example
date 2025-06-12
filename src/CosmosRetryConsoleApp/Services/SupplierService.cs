@@ -29,11 +29,14 @@ namespace CosmosRetryConsoleApp.Services
         // Update all suppliers (returns RU, ms, updatedCount)
         public async Task<(double ru, long ms, int updatedCount)> UpdateAllSuppliersAsync<T>() where T : Supplier
         {
-            QueryDefinition query = new QueryDefinition("SELECT * FROM c");
             var sw = System.Diagnostics.Stopwatch.StartNew();
             double ru = 0;
             int updatedCount = 0;
-            FeedIterator<T> iterator = _containerService.GetContainer().GetItemQueryIterator<T>(query);
+
+            QueryDefinition query = new QueryDefinition("SELECT * FROM c");
+
+            FeedIterator<T> iterator = await _containerService.QueryItemsAsync<T>(query);
+            
             while (iterator.HasMoreResults)
             {
                 FeedResponse<T> response = await iterator.ReadNextAsync();
@@ -54,7 +57,8 @@ namespace CosmosRetryConsoleApp.Services
             double ru = 0;
             var qpIds = new List<string>();
             QueryDefinition query = new QueryDefinition($"SELECT * FROM c WHERE c.{supplierIdField} = @supplierId").WithParameter("@supplierId", supplierId);
-            FeedIterator<TQp> iterator = _containerService.GetContainer().GetItemQueryIterator<TQp>(query);
+
+            FeedIterator<TQp> iterator = await _containerService.QueryItemsAsync<TQp>(query);
             while (iterator.HasMoreResults)
             {
                 FeedResponse<TQp> response = await iterator.ReadNextAsync();
@@ -75,7 +79,7 @@ namespace CosmosRetryConsoleApp.Services
             double ru = 0;
             var qpIds = new List<string>();
             QueryDefinition query = new QueryDefinition("SELECT c.QPs FROM c WHERE c.id = @supplierId").WithParameter("@supplierId", supplierId);
-            FeedIterator<SupplierB> iterator = _containerService.GetContainer().GetItemQueryIterator<SupplierB>(query);
+            FeedIterator<SupplierB> iterator = await _containerService.QueryItemsAsync<SupplierB>(query);
             while (iterator.HasMoreResults)
             {
                 FeedResponse<SupplierB> response = await iterator.ReadNextAsync();
