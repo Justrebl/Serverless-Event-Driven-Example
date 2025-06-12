@@ -15,107 +15,111 @@ namespace CosmosRetryConsoleApp.Services
             _containerService = containerService;
         }
 
+        #region Generic QP Methods
         public async Task<ItemResponse<T>> UpsertQpAsync<T>(T qp) where T : QP
         {
             return await _containerService.UpsertItemAsync(qp, qp.id);
         }
 
-        public async Task<ItemResponse<T>> CreateQpAsync<T>(T qp) where T : QP
-        {
-            return await _containerService.CreateItemAsync(qp, qp.id);
-        }
-
-        public async Task<ItemResponse<T>> UpdateQpAsync<T>(T qp) where T : QP
-        {
-            return await _containerService.ReplaceItemAsync(qp, qp.id);
-        }
-
-        public async Task<(double ru, long ms)> FindQpByIdAsync<T>(string qpId) where T : QP
+        public async Task<(double ru, long ms, T qp)> FindQpByIdAsync<T>(string qpId) where T : QP
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             double ru = -1;
+            T resource = null;
             try
             {
                 var resp = await _containerService.ReadItemAsync<T>(qpId);
                 ru = resp.RequestCharge;
+                resource  = resp.Resource;
             }
             catch (CosmosException) { }
             sw.Stop();
-            return (ru, sw.ElapsedMilliseconds);
+            return (ru, sw.ElapsedMilliseconds, resource);
         }
 
+        #endregion
+        #region Model A Methods
+
         // Create a QP (Model A)
-        public async Task<(double ru, long ms, string qpId)> CreateQpAsync<T>(string supplierId, string supplierIdField) where T : QP, new()
+        public async Task<(double ru, long ms, QPA qp)> CreateQpAsync(QPA newQp)
         {
-            var newQp = new T
-            {
-                id = Guid.NewGuid().ToString(),
-                property1 = "val1",
-                property2 = "val2"
-            };
-            // Set supplierId if property exists (Model A)
-            var prop = typeof(T).GetProperty(supplierIdField);
-            if (prop != null)
-                prop.SetValue(newQp, supplierId);
+            newQp.id = Guid.NewGuid().ToString(); // Ensure unique ID for QP
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var resp = await _containerService.CreateItemAsync(newQp, newQp.id);
             sw.Stop();
-            return (resp.RequestCharge, sw.ElapsedMilliseconds, newQp.id);
+            return (resp.RequestCharge, sw.ElapsedMilliseconds, resp.Resource);
         }
 
-        // Create QP and add to supplier's QPs list (Model B)
-        public async Task<(double ru, long ms, string qpId)> CreateQpAndAddToSupplierAsync<TSupplier>(SupplierService supplierService, string supplierId) where TSupplier : SupplierB, new()
+        // Find all QPs for a supplier (Model A)
+        public async Task<(double ru, long ms, List<string> qpIds)> FindQpsBySupplierIdAsync(string supplierId)
         {
-            var newQp = new QPB
-            {
-                id = Guid.NewGuid().ToString(),
-                property1 = "val1",
-                property2 = "val2"
-            };
+            
+            double ru = 0;
+            var qpIds = new List<string>();
+
+            QueryDefinition query = new QueryDefinition($"SELECT * FROM c WHERE c.idSupplier = @supplierId").WithParameter("@supplierId", supplierId);
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            var createQpResp = await _containerService.CreateItemAsync(newQp, newQp.id);
-            // Read supplier, add QP id, update supplier
-            var supplierResp = await supplierService.GetSupplierByIdAsync<TSupplier>(supplierId);
-            var supplier = supplierResp.Resource;
-            if (supplier.QPs == null)
-                supplier.QPs = new List<string>();
-            supplier.QPs.Add(newQp.id);
-            var updateSupplierResp = await supplierService.UpsertSupplierAsync(supplier);
+            FeedIterator<QPA> iterator = await _containerService.QueryItemsAsync<QPA>(query);
+            while (iterator.HasMoreResults)
+            {
+                FeedResponse<QPA> response = await iterator.ReadNextAsync();
+                ru += response.RequestCharge;
+                foreach (var doc in response)
+                {
+                    try { qpIds.Add(doc.id); } catch { }
+                }
+            }
             sw.Stop();
-            return (createQpResp.RequestCharge + updateSupplierResp.RequestCharge, sw.ElapsedMilliseconds, newQp.id);
+
+            return (ru, sw.ElapsedMilliseconds, qpIds);
         }
 
         // Update a QP (Model A)
-        public async Task<(double ru, long ms)> UpdateQpAsync<T>(string qpId, string supplierId, string supplierIdField) where T : QP, new()
+        public async Task<(double ru, long ms)> UpdateQpAsync(QPA qp)
         {
-            var updatedQp = new T
-            {
-                id = qpId,
-                property1 = "val1-updated",
-                property2 = "val2-updated"
-            };
-            var prop = typeof(T).GetProperty(supplierIdField);
-            if (prop != null)
-                prop.SetValue(updatedQp, supplierId);
+            qp.property1 = "val1-updated";
+            qp.property2 = "val2-updated";
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            var resp = await _containerService.ReplaceItemAsync(updatedQp, qpId);
+            var resp = await _containerService.UpsertItemAsync(qp, qp.id);
             sw.Stop();
+
             return (resp.RequestCharge, sw.ElapsedMilliseconds);
+        }
+        #endregion
+
+        #region Model B Methods
+        // Create QP and add to supplier's QPs list (Model B)
+        public async Task<(double ru, long ms, QPB qpId)> CreateQpAndAddToSupplierAsync(SupplierService supplierService, QPB qpb, string supplierId)
+        {
+            qpb.id = Guid.NewGuid().ToString(); // Ensure unique ID for QP
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var createQpResp = await _containerService.CreateItemAsync(qpb, qpb.id);
+
+            // Read supplier, add QP id, update supplier
+            var supplierResp = await supplierService.GetSupplierByIdAsync<SupplierB>(supplierId);
+            var supplier = supplierResp.Resource;
+
+            supplier.QPs.Add(qpb.id);
+            var updateSupplierResp = await supplierService.UpsertSupplierAsync(supplier);
+            sw.Stop();
+
+            return (createQpResp.RequestCharge + updateSupplierResp.RequestCharge, sw.ElapsedMilliseconds, createQpResp.Resource);
         }
 
         // Update a QP (Model B)
-        public async Task<(double ru, long ms)> UpdateQpBAsync(string qpId)
+        public async Task<(double ru, long ms)> UpdateQpBAsync(QPB qp)
         {
-            var updatedQp = new QPB
-            {
-                id = qpId,
-                property1 = "val1-updated",
-                property2 = "val2-updated"
-            };
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            var resp = await _containerService.ReplaceItemAsync(updatedQp, qpId);
+            var resp = await _containerService.UpsertItemAsync(qp, qp.id);
             sw.Stop();
+
             return (resp.RequestCharge, sw.ElapsedMilliseconds);
         }
+
+        #endregion
     }
 }

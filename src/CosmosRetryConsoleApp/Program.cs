@@ -16,8 +16,8 @@ public static class AppInitializer
             .AddEnvironmentVariables()
             .Build();
 
-        var cosmosConfig = config.GetSection("CosmosDB").Get<CosmosDBConfig>()!;
-        var identityConfig = config.GetSection("Identity").Get<IdentityConfig>()!;
+        var cosmosConfig = config.GetSection(Const.CosmosDBSection).Get<CosmosDBConfig>()!;
+        var identityConfig = config.GetSection(Const.IdentitySection).Get<IdentityConfig>()!;
 
         return (cosmosConfig, identityConfig);
     }
@@ -55,7 +55,7 @@ class Program
         await ThrottlingSequence.RunAsync(dbClient, cosmosConfig.ContainerId);
 
         // Scenario : Compare Models
-        Console.WriteLine("Starting model comparison...");
+        Console.WriteLine("Starting model Comparison sequence...");
         await CompareModelsSequence.RunAsync(dbClient);
     }
 }

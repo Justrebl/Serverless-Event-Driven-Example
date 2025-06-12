@@ -5,19 +5,13 @@ namespace CosmosRetryConsoleApp.Config
         public const string CosmosDBSection = "CosmosDB";
         public const string IdentitySection = "Identity";
 
-        public const string SupplierAIdField = "supplierAId";
-        public const string SupplierBIdField = "supplierBId";
-
         public const string suppliersContainerIdA  = "SuppliersA";
         public const string suppliersContainerIdB  = "SuppliersB";
 
         public const string QPContainerIdA = "QP_A";
         public const string QPContainerIdB = "QP_B";
 
-        public const string QPIdField = "qpId";
-        public const string QPTypeField = "qpType";
-
-        public const int DefaultMaxRetries = 10; // Maximum number of retries for throttled requests
+        public const int DefaultMaxRetries = 9; // Maximum number of retries for throttled requests
         public const int DefaultMaxWaitTimeSeconds = 30; // Maximum wait time for retries 
     }
 }
