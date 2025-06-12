@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "bin/Debug/net8.0/Cli.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Cosmos_Example",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+          }
+    ]
+}
